@@ -52,10 +52,10 @@ class local_info(ShutItModule):
         allow from all
     </Directory>
     WSGIScriptAlias / /opt/local-info/wsgi.py
-</VirtualHost>''')
-		shutit.send_file('/opt/local-info/wsgi.py','''print 'hello' ''')
-		shutit.send('chmod +x /opt/local-info/wsgi.py')
+</VirtualHost>''',truncate=True)
 		shutit.send("perl -p -i -e 's/Require all denied/Require all granted/' /etc/apache2/apache2.conf")
+		shutit.send_host_file('/opt/local-info/wsgi.py','context/wsgi.py')
+		shutit.send('chmod +x /opt/local-info/wsgi.py')
 		return True
 
 def module():

@@ -18,21 +18,18 @@ def application(environ, start_response):
 	status = '200 OK'
 	output = ''
 	data = []
-	print data
-
 	response_headers = [('Content-type', 'text/plain'),
 	                    ('Content-Length', str(len(output)))]
-
-
 	start_response(status, response_headers)
-
 	get_buses(data)
 	# Do this after the web waits
 	time = int(time.time())
 	return [output]
 
 def get_buses(data):
-	for url in ('http://m.countdown.tfl.gov.uk/arrivals/73906',):
+	# TODO: mapping of stopid to place name
+	for stopid in ('73906','53941','50305'):
+		url = 'http://m.countdown.tfl.gov.uk/arrivals/' + stopid
 		req = urllib2.Request(url)
 		response = urllib2.urlopen(req)
 		the_page = response.read()
@@ -45,16 +42,18 @@ def get_buses(data):
 				route = tr.find('td','resRoute')
 				if direction:
 					direction = direction.string.strip()
+					due = due.string.strip()
 					if due == 'due':
 						due       = 30
 					else:
-						due       = due.string.strip().split()[0]
+						due       = due.split()[0]
 					route     = route.string.strip()
 					t = int(time.time() + (int(due) * 60))
-					data.append({'type':'BUS','route':route,'destination':direction,'leaving':str(t),'arriving':'','status':''})
+					data.append({'from':str(stopid),'type':'BUS','route':route,'destination':direction,'leaving':t,'arriving':'NA','status':'NA'})
 
 def get_trains(data):
-	for url in ('http://ojp.nationalrail.co.uk/service/ldbboard/dep/NDL',):
+	for station in ('NDL',):
+		url = 'http://ojp.nationalrail.co.uk/service/ldbboard/dep/' + station
 		req = urllib2.Request(url)
 		response = urllib2.urlopen(req)
 		the_page = response.read()
@@ -65,7 +64,7 @@ def get_trains(data):
 				count = 1
 				route = ''
 				destination = ''
-				status = ''
+				status = 'OK'
 				t = ''
 				arriving = ''
 				for td in tr.find_all('td'):
@@ -84,7 +83,7 @@ def get_trains(data):
 						s = str(td)
 					count += 1
 				if t != '':
-					data.append({'type':'TRAIN','route':route,'destination':destination,'leaving':t,'arriving':'','status':status})
+					data.append({'from':'NDL','type':'TRAIN','route':route,'destination':destination,'leaving':int(t),'arriving':'','status':status})
 
 def print_data(data):
 	for item in data:
@@ -100,21 +99,24 @@ def order_data(data,field='leaving'):
 	times = []
 	for item in data:
 		times.append(item[field])
-	times.sort()
 	# remove dupes
 	times = set(times)
+	times = list(times)
+	times.sort()
 	newdata = []
 	# go through times, then go through data, if field matches value in times, append data item
 	for t in times:
+		print t
 		for item in data:
 			if item[field] == t:
+				print item
 				newdata.append(item)
-	data = newdata
+	return newdata
 
 if __name__ == "__main__":
 	data = []
 	get_buses(data)
 	get_trains(data)
-	order_data(data)
+	data = order_data(data)
 	print_data(data)
 

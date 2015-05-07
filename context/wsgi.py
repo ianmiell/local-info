@@ -106,10 +106,8 @@ def order_data(data,field='leaving'):
 	newdata = []
 	# go through times, then go through data, if field matches value in times, append data item
 	for t in times:
-		print t
 		for item in data:
 			if item[field] == t:
-				print item
 				newdata.append(item)
 	return newdata
 

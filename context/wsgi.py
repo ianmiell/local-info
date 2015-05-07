@@ -88,7 +88,13 @@ def get_trains(data):
 
 def print_data(data):
 	for item in data:
-		print item
+		row = ''
+		for field in item:
+			if field == 'leaving':
+				row += 'at: ' + time.ctime(float(item[field])) + ','
+			else:
+				row += field + ': ' + item[field] + ', '
+		print row
 
 def order_data(data,field='leaving'):
 	times = []
